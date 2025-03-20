@@ -43,7 +43,7 @@ const HeroSection = () => {
       {/* Background Video */}
       <video
         ref={videoRef}
-        className="absolute top-0 left-0 w-full h-full object-cover opacity-50"
+        className="absolute top-0 left-0 w-full h-full object-cover opacity-70 brightness-110"
         loop
         muted
         playsInline
