@@ -1,4 +1,5 @@
 // src/components/icons/VaultIcon.tsx
+
 const VaultIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"

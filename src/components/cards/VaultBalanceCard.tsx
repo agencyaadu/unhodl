@@ -1,6 +1,6 @@
 // src/components/cards/VaultBalanceCard.tsx
 import React from "react";
-import VaultIcon from "../icons/VaultIcon";
+import VaultIcon from "../icons/VaultIcon"; // Change import path
 
 interface VaultBalanceCardProps {
   vaultBalance: number;
