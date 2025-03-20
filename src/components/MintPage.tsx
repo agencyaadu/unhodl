@@ -11,7 +11,8 @@ import {
 } from "@react-three/drei";
 import * as THREE from "three";
 import { useRouter } from "next/navigation";
-import { ethers } from 'ethers';
+import { ethers } from "ethers";
+import { getVaultAddress } from "@/Hooks/Hook";
 
 // Extend the Window interface to include the ethereum property
 declare global {
@@ -30,7 +31,6 @@ interface CreditCardProps {
 const CreditCard: React.FC<CreditCardProps> = ({ isMinting, onMint }) => {
   const { scene } = useGLTF("/credit-card.glb");
   const cardRef = useRef<THREE.Group>(null);
-
 
   useEffect(() => {
     if (scene) {
@@ -169,10 +169,10 @@ const LoadingFallback = () => (
   </div>
 );
 
-const Dashboard2: React.FC = () => {
+const MintPage: React.FC = () => {
   const [isMinting, setIsMinting] = useState<boolean>(false);
   const [canvasSupported, setCanvasSupported] = useState<boolean>(false);
-  const [account, setAccount] = useState<string>('');
+  const [account, setAccount] = useState<string>("");
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
   const router = useRouter();
 
@@ -183,6 +183,9 @@ const Dashboard2: React.FC = () => {
       const gl =
         canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
 
+      getVaultAddress(account as `0x${string}`).then((vaultAddress) => {
+        console.log(vaultAddress);
+      });
       if (!gl) {
         setCanvasSupported(false);
       } else {
@@ -240,26 +243,25 @@ const Dashboard2: React.FC = () => {
     }
 
     setIsConnecting(true);
-    
+
     try {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
-      
+
       // Request account access
-      const accounts = await window.ethereum.request({ 
-        method: 'eth_requestAccounts' 
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
       });
-      
+
       setAccount(accounts[0]);
-      
+
       // Listen for account changes
-      window.ethereum.on('accountsChanged', (newAccounts: string[]) => {
+      window.ethereum.on("accountsChanged", (newAccounts: string[]) => {
         if (newAccounts.length === 0) {
-          setAccount('');
+          setAccount("");
         } else {
           setAccount(newAccounts[0]);
         }
       });
-      
     } catch (error) {
       console.error("Error connecting wallet:", error);
     } finally {
@@ -269,8 +271,10 @@ const Dashboard2: React.FC = () => {
 
   // Format address for display
   const formatAddress = (address: string): string => {
-    if (!address) return '';
-    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+    if (!address) return "";
+    return `${address.substring(0, 6)}...${address.substring(
+      address.length - 4
+    )}`;
   };
 
   return (
@@ -281,7 +285,7 @@ const Dashboard2: React.FC = () => {
       {/* Header */}
       <header className="relative w-full p-6 flex justify-between items-center">
         <div className="text-gray-800 text-2xl font-bold">DirectDeposit</div>
-        
+
         {/* Connect Wallet Button */}
         <button
           onClick={connectWallet}
@@ -290,9 +294,25 @@ const Dashboard2: React.FC = () => {
         >
           {isConnecting ? (
             <span className="flex items-center">
-              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <svg
+                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
               Connecting...
             </span>
@@ -302,7 +322,7 @@ const Dashboard2: React.FC = () => {
               {formatAddress(account)}
             </span>
           ) : (
-            'Connect Wallet'
+            "Connect Wallet"
           )}
         </button>
       </header>
@@ -389,5 +409,4 @@ const Dashboard2: React.FC = () => {
   );
 };
 
-
-export default Dashboard2;
+export default MintPage;

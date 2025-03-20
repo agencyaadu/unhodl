@@ -1,9 +1,7 @@
 // src/app/get-started/page.tsx
 
-import Dashboard2 from "@/components/Dashboard2";
-
-
+import MintPage from "@/components/MintPage";
 
 export default function GetStartedPage() {
-  return <Dashboard2 />;
+  return <MintPage />;
 }
