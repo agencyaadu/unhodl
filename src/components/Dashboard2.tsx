@@ -11,6 +11,14 @@ import {
 } from "@react-three/drei";
 import * as THREE from "three";
 import { useRouter } from "next/navigation";
+import { ethers } from 'ethers';
+
+// Extend the Window interface to include the ethereum property
+declare global {
+  interface Window {
+    ethereum: any;
+  }
+}
 
 // Define proper types
 interface CreditCardProps {
@@ -57,16 +65,6 @@ const CreditCard: React.FC<CreditCardProps> = ({ isMinting, onMint }) => {
   return (
     <group>
       <primitive ref={cardRef} object={scene} scale={5} position={[0, 0, 0]} />
-
-      {/* HTML button overlay positioned on the card */}
-      <Html position={[0, -1.5, 0.5]} center>
-        <button
-          onClick={onMint}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105"
-        >
-          Mint
-        </button>
-      </Html>
     </group>
   );
 };
@@ -172,7 +170,9 @@ const LoadingFallback = () => (
 
 const Dashboard2: React.FC = () => {
   const [isMinting, setIsMinting] = useState<boolean>(false);
-  const [canvasSupported, setCanvasSupported] = useState<boolean>(true);
+  const [canvasSupported, setCanvasSupported] = useState<boolean>(false);
+  const [account, setAccount] = useState<string>('');
+  const [isConnecting, setIsConnecting] = useState<boolean>(false);
   const router = useRouter();
 
   // Check if WebGL is supported on mount
@@ -184,10 +184,29 @@ const Dashboard2: React.FC = () => {
 
       if (!gl) {
         setCanvasSupported(false);
+      } else {
+        setCanvasSupported(true);
       }
     } catch (e) {
       setCanvasSupported(false);
     }
+
+    // Check if the wallet was previously connected
+    const checkConnection = async () => {
+      if (window.ethereum) {
+        try {
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
+          const accounts = await provider.listAccounts();
+          if (accounts.length > 0) {
+            setAccount(accounts[0]);
+          }
+        } catch (error) {
+          console.error("Error checking wallet connection:", error);
+        }
+      }
+    };
+
+    checkConnection();
   }, []);
 
   // Handle button clicks using inline functions to avoid any binding issues
@@ -212,14 +231,79 @@ const Dashboard2: React.FC = () => {
     }, 3000);
   };
 
+  // Connect wallet function
+  const connectWallet = async () => {
+    if (!window.ethereum) {
+      alert("Please install MetaMask or another Ethereum wallet to connect");
+      return;
+    }
+
+    setIsConnecting(true);
+    
+    try {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      
+      // Request account access
+      const accounts = await window.ethereum.request({ 
+        method: 'eth_requestAccounts' 
+      });
+      
+      setAccount(accounts[0]);
+      
+      // Listen for account changes
+      window.ethereum.on('accountsChanged', (newAccounts: string[]) => {
+        if (newAccounts.length === 0) {
+          setAccount('');
+        } else {
+          setAccount(newAccounts[0]);
+        }
+      });
+      
+    } catch (error) {
+      console.error("Error connecting wallet:", error);
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  // Format address for display
+  const formatAddress = (address: string): string => {
+    if (!address) return '';
+    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+  };
+
   return (
     <div className="relative w-full h-screen bg-gradient-to-br from-white via-blue-100 to-blue-300">
       {/* Background pattern */}
       <div className="fixed inset-0 bg-[url('/pattern.svg')] bg-repeat opacity-10"></div>
 
       {/* Header */}
-      <header className="relative w-full p-6">
+      <header className="relative w-full p-6 flex justify-between items-center">
         <div className="text-gray-800 text-2xl font-bold">DirectDeposit</div>
+        
+        {/* Connect Wallet Button */}
+        <button
+          onClick={connectWallet}
+          disabled={isConnecting}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full flex items-center transition-all duration-300"
+        >
+          {isConnecting ? (
+            <span className="flex items-center">
+              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Connecting...
+            </span>
+          ) : account ? (
+            <span className="flex items-center">
+              <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+              {formatAddress(account)}
+            </span>
+          ) : (
+            'Connect Wallet'
+          )}
+        </button>
       </header>
 
       {/* Main content container */}
@@ -303,5 +387,6 @@ const Dashboard2: React.FC = () => {
     </div>
   );
 };
+
 
 export default Dashboard2;
