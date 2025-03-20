@@ -123,9 +123,14 @@ const Dashboard = () => {
     // Add your repayment logic here using the contract methods
   };
 
-  const handleWithdraw = async () => {
-    console.log("Processing withdrawal");
+  const handleWithdraw = async (amount: number) => {
+    console.log("Processing withdrawal of", amount);
     // Add your withdrawal logic here using the contract methods
+  };
+
+  const handleDeposit = async (amount: number) => {
+    console.log("Processing deposit of", amount);
+    // Add your deposit logic here using the contract methods
   };
 
   if (loading) {
@@ -190,7 +195,11 @@ const Dashboard = () => {
         </h1>
         {/* Top Cards Row */}
         {userData && (
-          <TopCards userData={userData} handleWithdraw={handleWithdraw} />
+          <TopCards
+            userData={userData}
+            handleWithdraw={handleWithdraw}
+            handleDeposit={handleDeposit}
+          />
         )}
         {/* Loan Information Section */}
         {userData && (

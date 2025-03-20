@@ -1,5 +1,6 @@
 // src/components/TopCards.tsx
-import React from "react";
+import React, { useState } from "react";
+import VaultBalanceCard from "./cards/VaultBalanceCard";
 
 interface UserData {
   name: string;
@@ -16,38 +17,24 @@ interface UserData {
 
 interface TopCardsProps {
   userData: UserData;
-  handleWithdraw: () => void;
+  handleWithdraw: (amount: number) => void;
+  handleDeposit: (amount: number) => void;
 }
 
-const TopCards: React.FC<TopCardsProps> = ({ userData, handleWithdraw }) => {
+const TopCards: React.FC<TopCardsProps> = ({
+  userData,
+  handleWithdraw,
+  handleDeposit,
+}) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-      {/* Vault Balance Card */}
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">
-            Vault Balance
-          </h3>
-          <div className="flex items-end mb-4">
-            <span className="text-3xl font-bold text-gray-900">
-              {userData.vaultBalance.toFixed(4)}
-            </span>
-            <span className="ml-2 text-gray-500">BTC</span>
-          </div>
-          <p className="text-gray-500 text-sm mb-4">
-            Value: $
-            {userData.vaultValueUSD.toLocaleString(undefined, {
-              maximumFractionDigits: 2,
-            })}
-          </p>
-          <button
-            onClick={handleWithdraw}
-            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          >
-            Withdraw
-          </button>
-        </div>
-      </div>
+      {/* Vault Balance Card - Updated to use VaultBalanceCard component */}
+      <VaultBalanceCard
+        vaultBalance={userData.vaultBalance}
+        vaultValueUSD={userData.vaultValueUSD}
+        onWithdraw={handleWithdraw}
+        onDeposit={handleDeposit}
+      />
 
       {/* Credit Score Card */}
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
