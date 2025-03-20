@@ -17,9 +17,7 @@ export const getVaultAddress = async (address:`0x${string}`) => {
     const manager = new ethers.Contract(MANAGER_ADDRESS, Manager, provider);
     const vaultAddress = await manager.vaultOwners(address);    
 
-    console.log(vaultAddress);
-    console.log(provider);
-       
+    return vaultAddress;
 }
 
 export const collateral = async (address:`0x${string}`) => {
@@ -48,6 +46,6 @@ export const collateral = async (address:`0x${string}`) => {
 
 } 
 
-export const MANAGER_ADDRESS = "0x24Edf72C88d8cc616689E23d007465C00d084948"
-export const WBTC = "0x7FcC2D0D420B057C811e976800057d470d15A6B0"
-export const USDT = "0xdA8C717ed176FaA6FE89b04877917727F9A24392"
+export const MANAGER_ADDRESS = "0x0E22A7cDF47F8A3f574af08Ed7776229fF9b2367"
+export const WBTC = "0xdb1D816f2eEc010F8aF79Ca0C59a63CceF1D27Ed"
+export const USDT = "0x28F73576727325dB10eBA316f8C39F0571600c4C"

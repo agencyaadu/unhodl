@@ -12,7 +12,8 @@ import {
 import * as THREE from "three";
 import { useRouter } from "next/navigation";
 import { ethers } from "ethers";
-import { getVaultAddress } from "@/Hooks/Hook";
+import { getVaultAddress, MANAGER_ADDRESS } from "@/Hooks/Hook";
+import ManagerAbi from "@/ABI/Manager.json";
 
 // Extend the Window interface to include the ethereum property
 declare global {
@@ -176,6 +177,11 @@ const MintPage: React.FC = () => {
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
   const router = useRouter();
 
+  getVaultAddress(account as `0x${string}`).then((vaultAddress) => {
+    console.log(vaultAddress);
+    setCanvasSupported(vaultAddress !="0x0000000000000000000000000000000000000000")
+  });
+
   // Check if WebGL is supported on mount
   useEffect(() => {
     try {
@@ -183,9 +189,6 @@ const MintPage: React.FC = () => {
       const gl =
         canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
 
-      getVaultAddress(account as `0x${string}`).then((vaultAddress) => {
-        console.log(vaultAddress);
-      });
       if (!gl) {
         setCanvasSupported(false);
       } else {
@@ -227,6 +230,17 @@ const MintPage: React.FC = () => {
   const handleMint = () => {
     setIsMinting(true);
     console.log("Minting card...");
+
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = provider.getSigner();
+    const contract = new ethers.Contract(
+      MANAGER_ADDRESS,
+      ManagerAbi,
+      signer
+    );
+
+    const tx = contract.createVault();
+    
 
     // Reset minting status after animation completes
     setTimeout(() => {
