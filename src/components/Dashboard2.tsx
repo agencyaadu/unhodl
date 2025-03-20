@@ -1,27 +1,49 @@
 "use client";
 
-import React, { useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Canvas, useLoader, useFrame } from "@react-three/fiber";
+import React, { useRef, useState, Suspense, useEffect } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
 import {
   OrbitControls,
   Environment,
   PerspectiveCamera,
+  Html,
+  useGLTF,
 } from "@react-three/drei";
 import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { useRouter } from "next/navigation";
 
 // Define proper types
 interface CreditCardProps {
   isMinting: boolean;
+  onMint: () => void;
 }
 
-// 3D Card Model Component with proper typing
-const CreditCard: React.FC<CreditCardProps> = ({ isMinting }) => {
-  // Specify the correct type for the ref
-  const cardRef = useRef<THREE.Object3D | null>(null);
-  const model = useLoader(GLTFLoader, "/credit-card.glb");
+// 3D Card Model Component with enhanced and debugged blur effect
+const CreditCard: React.FC<CreditCardProps> = ({ isMinting, onMint }) => {
+  const { scene } = useGLTF("/credit-card.glb");
+  const cardRef = useRef<THREE.Group>(null);
+
+  useEffect(() => {
+    if (scene) {
+      scene.traverse((node) => {
+        if (node instanceof THREE.Mesh) {
+          console.log("Node Material Type:", node.material.type); // Debug: Log material type
+
+          // Create a new MeshStandardMaterial with strong blur properties
+          const blurredMaterial = new THREE.MeshStandardMaterial({
+            transparent: true,
+            opacity: 0.5, // Even more transparent
+            roughness: 1.0, // Max roughness for maximum diffuseness
+            metalness: 0.0, // No metalness for a non-reflective look
+            color: new THREE.Color("#dddddd"), // Light grey tint to enhance blur
+            depthWrite: false, // Prevent depth sorting issues
+          });
+
+          node.material = blurredMaterial;
+        }
+      });
+    }
+  }, [scene]);
 
   useFrame(() => {
     if (cardRef.current) {
@@ -33,31 +55,84 @@ const CreditCard: React.FC<CreditCardProps> = ({ isMinting }) => {
   });
 
   return (
-    <primitive
-      ref={cardRef}
-      object={model.scene}
-      scale={5}
-      position={[0, 0, 0]}
-    />
+    <group>
+      <primitive ref={cardRef} object={scene} scale={5} position={[0, 0, 0]} />
+
+      {/* HTML button overlay positioned on the card */}
+      <Html position={[0, -1.5, 0.5]} center>
+        <button
+          onClick={onMint}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105"
+        >
+          Mint
+        </button>
+      </Html>
+    </group>
   );
 };
 
-// Blur overlay for the 3D model
-const BlurOverlay: React.FC = () => {
+// Fallback component when 3D fails
+const FallbackCard: React.FC<CreditCardProps> = ({ onMint }) => {
   return (
-    <mesh position={[0, 0, 2.5]}>
-      <planeGeometry args={[30, 30]} />
-      <meshBasicMaterial transparent={true} opacity={0.2} color="#ffffff" />
-    </mesh>
+    <div className="w-full h-full flex items-center justify-center">
+      <div className="bg-white rounded-xl shadow-xl p-8 max-w-md w-full">
+        <div className="flex justify-between mb-8">
+          <div className="text-xl font-bold text-blue-600">DirectDeposit</div>
+          <div className="text-gray-500">Virtual Card</div>
+        </div>
+        <div className="bg-gradient-to-r from-blue-400 to-blue-600 h-40 rounded-lg mb-6 flex items-center justify-center">
+          <div className="text-white text-center">
+            <div className="text-lg font-medium mb-2">Bitcoin-Backed</div>
+            <div className="text-sm opacity-80">Credit Card</div>
+          </div>
+        </div>
+        <div className="text-center">
+          <button
+            onClick={onMint}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105"
+          >
+            Mint Your Card
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
+
+// ErrorBoundary for Canvas to handle WebGL errors
+class CanvasErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallback: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode; fallback: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("Canvas error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+
+    return this.props.children;
+  }
+}
 
 // Scene component with proper typing
 interface SceneProps {
   isMinting: boolean;
+  onMint: () => void;
 }
 
-const Scene: React.FC<SceneProps> = ({ isMinting }) => {
+const Scene: React.FC<SceneProps> = ({ isMinting, onMint }) => {
   return (
     <>
       <PerspectiveCamera makeDefault position={[0, 0, 10]} />
@@ -70,8 +145,8 @@ const Scene: React.FC<SceneProps> = ({ isMinting }) => {
       />
       <pointLight position={[-10, -10, -10]} intensity={0.5} />
 
-      <CreditCard isMinting={isMinting} />
-      <BlurOverlay />
+      {/* Credit card with mint button */}
+      <CreditCard isMinting={isMinting} onMint={onMint} />
 
       <OrbitControls
         enablePan={false}
@@ -85,20 +160,56 @@ const Scene: React.FC<SceneProps> = ({ isMinting }) => {
   );
 };
 
+// Create a loading fallback
+const LoadingFallback = () => (
+  <div className="w-full h-full flex items-center justify-center">
+    <div className="text-center">
+      <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+      <p className="text-gray-700">Loading 3D environment...</p>
+    </div>
+  </div>
+);
+
 const Dashboard2: React.FC = () => {
   const [isMinting, setIsMinting] = useState<boolean>(false);
+  const [canvasSupported, setCanvasSupported] = useState<boolean>(true);
   const router = useRouter();
+
+  // Check if WebGL is supported on mount
+  useEffect(() => {
+    try {
+      const canvas = document.createElement("canvas");
+      const gl =
+        canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+
+      if (!gl) {
+        setCanvasSupported(false);
+      }
+    } catch (e) {
+      setCanvasSupported(false);
+    }
+  }, []);
 
   // Handle button clicks using inline functions to avoid any binding issues
   const handleDashboard = () => {
-    alert("Dashboard button clicked!");
     console.log("Navigating to dashboard");
     router.push("/dashboard");
   };
 
   const handlePayNow = () => {
-    alert("Pay Now button clicked!");
     console.log("Processing payment");
+  };
+
+  // Handle mint button click
+  const handleMint = () => {
+    setIsMinting(true);
+    console.log("Minting card...");
+
+    // Reset minting status after animation completes
+    setTimeout(() => {
+      setIsMinting(false);
+      console.log("Minting complete!");
+    }, 3000);
   };
 
   return (
@@ -113,12 +224,40 @@ const Dashboard2: React.FC = () => {
 
       {/* Main content container */}
       <div className="flex flex-col lg:flex-row w-full h-full pt-16">
-        {/* 3D Card Section */}
+        {/* 3D Card Section with Error Boundary and Suspense */}
         <div className="w-full lg:w-1/2 h-1/2 lg:h-full relative">
           <div className="w-full h-full bg-gradient-to-br from-white to-blue-200">
-            <Canvas shadows>
-              <Scene isMinting={isMinting} />
-            </Canvas>
+            {canvasSupported ? (
+              <CanvasErrorBoundary
+                fallback={
+                  <FallbackCard isMinting={isMinting} onMint={handleMint} />
+                }
+              >
+                <Canvas
+                  shadows
+                  dpr={[1, 1.5]} // Reduced pixel ratio to prevent performance issues
+                  gl={{
+                    powerPreference: "default",
+                    antialias: false, // Disable antialiasing to improve performance
+                    alpha: true,
+                    stencil: false,
+                    depth: true,
+                  }}
+                >
+                  <Suspense
+                    fallback={
+                      <Html center>
+                        <LoadingFallback />
+                      </Html>
+                    }
+                  >
+                    <Scene isMinting={isMinting} onMint={handleMint} />
+                  </Suspense>
+                </Canvas>
+              </CanvasErrorBoundary>
+            ) : (
+              <FallbackCard isMinting={isMinting} onMint={handleMint} />
+            )}
           </div>
         </div>
 
