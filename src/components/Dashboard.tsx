@@ -422,7 +422,7 @@ const Dashboard = () => {
                 Loan Details
               </button>
               <button
-                className={`px-4 py-2 rounded-md ml-2 ${
+                className={`px-4 py-2 rounded-md ml-2 repayment-button ${
                   activeTab === "repayment"
                     ? "bg-blue-500 text-white"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -439,7 +439,6 @@ const Dashboard = () => {
                     activeTab === "repayment" ? "#3b82f6" : "#f3f4f6",
                   color: activeTab === "repayment" ? "white" : "#4b5563",
                   transition: "background-color 0.2s",
-                  "&:hover": { backgroundColor: "#e5e7eb" },
                 }}
               >
                 Repayment Schedule
@@ -447,17 +446,7 @@ const Dashboard = () => {
             </div>
 
             {activeTab === "details" && (
-              <div
-                className="grid grid-cols-1 lg:grid-cols-2 gap-6"
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(1, minmax(0, 1fr))",
-                  "@media (min-width: 1024px)": {
-                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                  },
-                  gap: "1.5rem",
-                }}
-              >
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 loan-details-grid">
                 {/* Loan Details Card */}
                 <div
                   className="bg-white rounded-lg shadow-md"
@@ -491,7 +480,7 @@ const Dashboard = () => {
                       style={{
                         display: "grid",
                         gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                        gapRow: "1rem",
+                        rowGap: "1rem", // Changed from gapRow to rowGap
                       }}
                     >
                       <div>
@@ -602,8 +591,11 @@ const Dashboard = () => {
                       }}
                     >
                       Loan Status
-                    </h3>
-                    <div className="space-y-4" style={{ spaceY: "1rem" }}>
+                    </h3>{" "}
+                    {/* Closing h3 tag here */}
+                    <div className="space-y-4">
+                      {" "}
+                      {/* Removed style={{ spaceY: "1rem" }} */}
                       <div>
                         <div
                           className="flex justify-between mb-1"
@@ -664,7 +656,6 @@ const Dashboard = () => {
                           {userData.maxLoanAmount.toLocaleString()} credit line
                         </p>
                       </div>
-
                       <div>
                         <div
                           className="flex justify-between mb-1"
@@ -716,7 +707,6 @@ const Dashboard = () => {
                           />
                         </div>
                       </div>
-
                       <div
                         className="pt-4 border-t border-gray-200"
                         style={{
@@ -763,7 +753,6 @@ const Dashboard = () => {
                               paddingBottom: "0.5rem",
                               borderRadius: "0.375rem",
                               transition: "background-color 0.2s",
-                              "&:hover": { backgroundColor: "#7e22ce" },
                             }}
                           >
                             Repay Now
@@ -1099,6 +1088,11 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+      <style jsx>{`
+        .repayment-button:hover {
+          background-color: #e5e7eb;
+        }
+      `}</style>
     </div>
   );
 };

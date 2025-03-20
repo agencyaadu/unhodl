@@ -1,7 +1,8 @@
 "use client";
-// src/components/MintPage.tsx
+// src/app/page.tsx  (Assuming MintPage is your main page, if not adjust the path accordingly)
+
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"; // Assuming you have "@/components/ui/button"
 import { Canvas, useLoader, useFrame } from "@react-three/fiber";
 import {
   OrbitControls,
@@ -11,6 +12,7 @@ import {
 import * as THREE from "three";
 // Import the GLTFLoader properly
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { useRouter } from "next/navigation"; // Import useRouter
 
 // Define a proper type for the cardRef
 interface CreditCardProps {
@@ -21,7 +23,7 @@ interface CreditCardProps {
 const CreditCard: React.FC<CreditCardProps> = ({ isMinting }) => {
   // Specify the type for the ref
   const cardRef = useRef<THREE.Object3D>(null);
-  const model = useLoader(GLTFLoader, "/credit-card.glb");
+  const model = useLoader(GLTFLoader, "/credit-card.glb"); // Make sure "/credit-card.glb" is in your public directory
 
   // Fixed the type issue with position
   useFrame(() => {
@@ -90,6 +92,7 @@ const Scene = ({ isMinting }: { isMinting: boolean }) => {
 const MintPage = () => {
   const [isMinting, setIsMinting] = useState(false);
   const [walletConnected, setWalletConnected] = useState(false);
+  const router = useRouter(); // Use useRouter for navigation
 
   const handleConnectWallet = () => {
     setWalletConnected(true);
@@ -110,16 +113,15 @@ const MintPage = () => {
     }, 3000);
   };
 
-  const handleDashboard = () => {
-    // Handle dashboard navigation
+  const handleDashboard = async () => {
+    alert("Dashboard button clicked!");
     console.log("Navigating to dashboard");
-    // Add your navigation logic here
+    router.push("/dashboard");
   };
 
   const handlePayNow = () => {
-    // Handle payment processing
+    alert("Pay Now button clicked!");
     console.log("Processing payment");
-    // Add your payment processing logic here
   };
 
   return (
@@ -128,7 +130,7 @@ const MintPage = () => {
       <div className="absolute inset-0 bg-[url('/pattern.svg')] bg-repeat opacity-10"></div>
 
       {/* Header with wallet button */}
-      <header className="absolute top-0 left-0 w-full z-10 p-6 flex justify-between items-center">
+      <header className="absolute top-0 left-0 w-full p-6 flex justify-between items-center">
         <div className="text-gray-800 text-2xl font-bold">DirectDeposit</div>
         <Button
           onClick={handleConnectWallet}
@@ -188,12 +190,13 @@ const MintPage = () => {
 
             {/* New buttons added here */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Button
-                onClick={handleDashboard}
+              <button
+                onClick={handleDashboard} // Directly pass the function reference
                 className="bg-blue-500 text-white hover:bg-blue-600 rounded-full px-8 py-3 text-lg font-semibold"
               >
                 Dashboard
-              </Button>
+              </button>
+
               <Button
                 onClick={handlePayNow}
                 className="bg-green-500 text-white hover:bg-green-600 rounded-full px-8 py-3 text-lg font-semibold"
