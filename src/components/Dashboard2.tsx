@@ -31,6 +31,7 @@ const CreditCard: React.FC<CreditCardProps> = ({ isMinting, onMint }) => {
   const { scene } = useGLTF("/credit-card.glb");
   const cardRef = useRef<THREE.Group>(null);
 
+
   useEffect(() => {
     if (scene) {
       scene.traverse((node) => {
