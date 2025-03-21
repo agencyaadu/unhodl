@@ -224,6 +224,7 @@ const MintPage: React.FC = () => {
 
   const handlePayNow = () => {
     console.log("Processing payment");
+    router.push("/Paynow");
   };
 
   // Handle mint button click

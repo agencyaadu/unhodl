@@ -59,21 +59,10 @@ const LoanDetailsCard: React.FC<LoanDetailsCardProps> = ({ userData }) => {
               className="text-sm text-gray-500"
               style={{ fontSize: "0.875rem", color: "#6b7280" }}
             >
-              Date Taken
+              Loan Token
             </p>
             <p className="font-medium" style={{ fontWeight: "500" }}>
               {userData.loanTaken}
-            </p>
-          </div>
-          <div>
-            <p
-              className="text-sm text-gray-500"
-              style={{ fontSize: "0.875rem", color: "#6b7280" }}
-            >
-              Duration
-            </p>
-            <p className="font-medium" style={{ fontWeight: "500" }}>
-              {userData.loanDuration}
             </p>
           </div>
           <div>
@@ -85,17 +74,6 @@ const LoanDetailsCard: React.FC<LoanDetailsCardProps> = ({ userData }) => {
             </p>
             <p className="font-medium" style={{ fontWeight: "500" }}>
               {userData.loanInterest}
-            </p>
-          </div>
-          <div>
-            <p
-              className="text-sm text-gray-500"
-              style={{ fontSize: "0.875rem", color: "#6b7280" }}
-            >
-              Total to Repay
-            </p>
-            <p className="font-medium" style={{ fontWeight: "500" }}>
-              ${userData.loanRepaymentAmount.toLocaleString()}
             </p>
           </div>
           <div>

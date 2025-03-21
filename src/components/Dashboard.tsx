@@ -40,6 +40,10 @@ const Dashboard = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // let vault : ethers.Contract;
+  // let vaultAddress : string;
+  const [Vault, setVault] = useState<ethers.Contract | null>(null);
+  const [vaultaddress, setVaultAddress] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchVaultData = async () => {
@@ -52,27 +56,31 @@ const Dashboard = () => {
         }
 
         const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
         const accounts = await provider.send("eth_requestAccounts", []);
         const userAddress = accounts[0];
 
         // Get vault address for the user
-        const manager = new ethers.Contract(MANAGER_ADDRESS, Manager, provider);
+        const manager = new ethers.Contract(MANAGER_ADDRESS, Manager, signer);
         const vaultAddress = await manager.vaultOwners(userAddress);
+        setVaultAddress(vaultAddress);
 
         if (!vaultAddress || vaultAddress === ethers.constants.AddressZero) {
           throw new Error("No vault found for this address");
         }
 
         // Connect to the vault contract
-        const vault = new ethers.Contract(vaultAddress, Vaultabi, provider);
-
+        const vault = new ethers.Contract(vaultAddress, Vaultabi, signer);
+        setVault(vault);
         // Fetch all vault data
-        const [collateral, maxLoanWBTC, maxLoanUSDT, creditScore] =
+        const [collateral, maxLoanWBTC, maxLoanUSDT, creditScore,loanAmount,loanToken] =
           await Promise.all([
             vault.collateralAmount(),
             vault.getMaxLoanAmount(WBTC),
             vault.getMaxLoanAmount(USDT),
             vault.creditScore(),
+            vault.loanAmount(),
+            vault.loanToken(),
           ]);
 
         // Convert the values
@@ -82,7 +90,7 @@ const Dashboard = () => {
         const creditScoreValue = Number(creditScore);
 
         // Current BTC price in USD (in a real app, fetch this from an API)
-        const btcPriceUSD = 57000;
+        const btcPriceUSD = 50000;
 
         // Set user data with dynamic values
         setUserData({
@@ -92,14 +100,14 @@ const Dashboard = () => {
           wrappedBTC: collateralAmount, // Assuming all collateral is wrapped BTC
           wrappedBTCValueUSD: collateralAmount * btcPriceUSD,
           creditScore: creditScoreValue,
-          maxCreditScore: 850, // Assuming max credit score is 850
-          creditScorePercentage: Math.round((creditScoreValue / 850) * 100),
-          loanAmount: 0, // In a real app, fetch current loan amount
+          maxCreditScore: 1500, // Assuming max credit score is 850
+          creditScorePercentage: Math.round((creditScoreValue / 1500) * 100),
+          loanAmount: loanToken==WBTC?Number(loanAmount)* 50000 / 1e18:Number(loanAmount) / (1e18 ),
           maxLoanAmount: maxLoanAmountWBTC,
           maxLoanAmountUSDT: maxLoanAmountUSDT,
-          loanTaken: "N/A", // In a real app, fetch from contract
+          loanTaken: loanToken==WBTC ? "WBTC" : "USDC", // In a real app, fetch from contract
           loanDuration: "12 months", // In a real app, fetch from contract
-          loanInterest: "4.5%", // In a real app, fetch from contract
+          loanInterest: "36%", // In a real app, fetch from contract
           loanRepaymentAmount: 0, // In a real app, calculate based on loan details
           nextPaymentDate: "N/A", // In a real app, calculate based on loan details
           nextPaymentAmount: 0, // In a real app, calculate based on loan details
@@ -120,15 +128,90 @@ const Dashboard = () => {
 
   const handleRepay = async () => {
     console.log("Processing repayment");
+    console.log(userData?.loanTaken);
+    
+
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = provider.getSigner();
+
+    const tokenContract = new ethers.Contract(userData?.loanTaken == "WBTC" ? WBTC:USDT, [{
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "approve",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }],
+    signer);
+
+    const tx = await tokenContract.approve(vaultaddress,ethers.utils.parseUnits(`${userData?.loanAmount}`, 18) );
+    await tx.wait();
+
+
+    Vault?.repayLoan(ethers.utils.parseUnits(`${userData?.loanAmount}`, 18));
     // Add your repayment logic here using the contract methods
   };
 
   const handleWithdraw = async (amount: number) => {
+
+    Vault?.withdrawCollateral(ethers.utils.parseUnits(`${amount}`, 18));
     console.log("Processing withdrawal of", amount);
     // Add your withdrawal logic here using the contract methods
   };
-
+  
   const handleDeposit = async (amount: number) => {
+
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = provider.getSigner();
+
+    console.log(amount);
+    
+
+    const WBTC_CONTRACT = new ethers.Contract(WBTC, [{
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "approve",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }], signer);
+
+    const tx = await WBTC_CONTRACT.approve(vaultaddress,ethers.utils.parseUnits(`${amount}`, 18) );
+    await tx.wait();
+
+    Vault?.depositCollateral( ethers.utils.parseUnits(`${amount}`, 18));
     console.log("Processing deposit of", amount);
     // Add your deposit logic here using the contract methods
   };
