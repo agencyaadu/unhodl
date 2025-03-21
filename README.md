@@ -2,6 +2,9 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 ## Getting Started
 
+## TEAM METAFIELDS - FREDRIK PARKER - +91 9677514444 - FREDRIKPARKER@GMAIL.COM
+
+
 First, run the development server:
 
 ```bash
